@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Live Location Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .info {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+    <div class="info" id="info">Waiting for location...</div>
+
+    <script>
+        const map = L.map('map').setView([0, 0], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+            .addTo(map);
+
+        let marker;
+        let polyline;
+
+        async function fetchLocations() {
+            const response = await fetch("https://YOUR-RENDER-URL.onrender.com/get-locations");
+            const data = await response.json();
+
+            if (data.length === 0) return;
+
+            const latlngs = data.map(loc => [loc.latitude, loc.longitude]);
+
+            const latest = data[data.length - 1];
+
+            if (!marker) {
+                marker = L.marker([latest.latitude, latest.longitude]).addTo(map);
+            } else {
+                marker.setLatLng([latest.latitude, latest.longitude]);
+            }
+
+            map.setView([latest.latitude, latest.longitude], 15);
+
+            if (polyline) {
+                polyline.setLatLngs(latlngs);
+            } else {
+                polyline = L.polyline(latlngs).addTo(map);
+            }
+
+            document.getElementById("info").innerHTML = `
+            <b>Speed:</b> ${latest.speed || 0} m/s <br>
+            <b>Time:</b> ${new Date(latest.timestamp).toLocaleTimeString()}
+        `;
+        }
+
+        setInterval(fetchLocations, 3000);
+    </script>
+
+</body>
+
+</html>
