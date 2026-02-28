@@ -39,19 +39,25 @@
             background: #f3f4f6;
             font-size: 14px
         }
+
+        .idbox {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #111
+        }
     </style>
 </head>
 
 <body>
     <h2>📍 Phone Tracker</h2>
-    <p>Allow location permission. Keep this page open.</p>
+    <p>Open with: <b>?id=yourname</b></p>
 
     <button class="btn start" id="btnStart" type="button">START</button>
     <button class="btn stop" id="btnStop" type="button">STOP</button>
 
     <div class="status" id="status">Status: Not started</div>
+    <div class="idbox" id="idbox"></div>
 
-    <!-- cache-bust so old JS never loads -->
     <script src="tracker.js?v=999"></script>
 </body>
 

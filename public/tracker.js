@@ -1,16 +1,22 @@
 const SERVER_URL = "https://gps-tracker-api-wqoy.onrender.com";
 
+const params = new URLSearchParams(location.search);
+const TRACKER_ID = params.get("id") || "default";
+
 let watchId = null;
 let started = false;
 
 const statusEl = document.getElementById("status");
+const idBox = document.getElementById("idbox");
 const btnStart = document.getElementById("btnStart");
 const btnStop = document.getElementById("btnStop");
+
+idBox.textContent = `Tracker ID: ${TRACKER_ID}`;
 
 function setStatus(t) { statusEl.textContent = t; }
 
 async function sendEvent(type) {
-    const res = await fetch(`${SERVER_URL}/event`, {
+    const res = await fetch(`${SERVER_URL}/event/${encodeURIComponent(TRACKER_ID)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, timestamp: new Date().toISOString() })
@@ -26,7 +32,7 @@ async function sendLocation(position) {
         timestamp: new Date().toISOString()
     };
 
-    await fetch(`${SERVER_URL}/location`, {
+    await fetch(`${SERVER_URL}/location/${encodeURIComponent(TRACKER_ID)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
@@ -72,4 +78,4 @@ async function stopTracking() {
 btnStart.addEventListener("click", startTracking);
 btnStop.addEventListener("click", stopTracking);
 
-console.log("tracker.js loaded ✅");
+console.log("tracker.js loaded ✅", TRACKER_ID);

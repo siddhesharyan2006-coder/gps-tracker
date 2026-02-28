@@ -4,10 +4,8 @@
 <head>
     <title>Live Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
     <style>
         html,
         body {
@@ -53,12 +51,16 @@
 </head>
 
 <body>
-    <div class="panel">🟢 START / 🔵 LIVE / 🔴 DESTINATION</div>
+    <div class="panel" id="title">Viewer</div>
     <div id="map"></div>
     <div class="bottom" id="info">Waiting for trip...</div>
 
     <script>
         const SERVER_URL = "https://gps-tracker-api-wqoy.onrender.com";
+        const params = new URLSearchParams(location.search);
+        const TRACKER_ID = params.get("id") || "default";
+
+        document.getElementById("title").innerText = `Tracking: ${TRACKER_ID}  |  🟢 START 🔵 LIVE 🔴 DEST`;
 
         const map = L.map("map").setView([0, 0], 2);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
@@ -83,16 +85,15 @@
 
         async function update() {
             const [locRes, tripRes] = await Promise.all([
-                fetch(`${SERVER_URL}/locations`, { cache: "no-store" }),
-                fetch(`${SERVER_URL}/trip`, { cache: "no-store" })
+                fetch(`${SERVER_URL}/locations/${encodeURIComponent(TRACKER_ID)}`, { cache: "no-store" }),
+                fetch(`${SERVER_URL}/trip/${encodeURIComponent(TRACKER_ID)}`, { cache: "no-store" })
             ]);
 
             const data = await locRes.json();
             const trip = await tripRes.json();
 
             if (!trip.startedAt) {
-                document.getElementById("info").innerHTML =
-                    "Trip not started yet. Ask tracker to press START.";
+                document.getElementById("info").innerHTML = `Trip not started for <b>${TRACKER_ID}</b>.`;
                 return;
             }
 
@@ -105,12 +106,10 @@
             const latlngs = data.map(p => [p.latitude, p.longitude]);
             const last = data[data.length - 1];
 
-            // START marker
             const sp = trip.startPoint || { latitude: data[0].latitude, longitude: data[0].longitude };
             if (!startMarker) startMarker = L.marker([sp.latitude, sp.longitude]).addTo(map).bindPopup("🟢 START");
             else startMarker.setLatLng([sp.latitude, sp.longitude]);
 
-            // LIVE marker (turns red after STOP)
             const iconToUse = (trip.stoppedAt ? liveRedIcon : liveBlueIcon);
             if (!liveMarker) {
                 liveMarker = L.marker([last.latitude, last.longitude], { icon: iconToUse })
@@ -121,14 +120,12 @@
                 liveMarker.setIcon(iconToUse);
             }
 
-            // DESTINATION marker (only after STOP)
             if (trip.stoppedAt && trip.stopPoint) {
                 const dp = trip.stopPoint;
                 if (!destMarker) destMarker = L.marker([dp.latitude, dp.longitude]).addTo(map).bindPopup("🔴 DESTINATION");
                 else destMarker.setLatLng([dp.latitude, dp.longitude]);
             }
 
-            // path
             if (!pathLine) pathLine = L.polyline(latlngs).addTo(map);
             else pathLine.setLatLngs(latlngs);
 
@@ -138,6 +135,7 @@
             const lastTime = new Date(last.timestamp).toLocaleString();
 
             document.getElementById("info").innerHTML = `
+      <b>ID:</b> ${TRACKER_ID}<br>
       <b>Started:</b> ${new Date(trip.startedAt).toLocaleString()}<br>
       <b>Stopped:</b> ${trip.stoppedAt ? new Date(trip.stoppedAt).toLocaleString() : "Not yet"}<br>
       <b>Live:</b> ${last.latitude.toFixed(6)}, ${last.longitude.toFixed(6)}<br>
