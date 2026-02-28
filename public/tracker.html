@@ -4,11 +4,63 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 40px 16px;
+        }
+
+        h2 {
+            margin: 0 0 10px;
+        }
+
+        p {
+            margin: 0 0 18px;
+        }
+
+        .btn {
+            padding: 12px 18px;
+            font-size: 16px;
+            border: none;
+            border-radius: 12px;
+            margin: 8px;
+            cursor: pointer;
+            width: 160px;
+        }
+
+        .start {
+            background: #18a34a;
+            color: white;
+        }
+
+        .stop {
+            background: #dc2626;
+            color: white;
+        }
+
+        .status {
+            margin-top: 18px;
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: #f3f4f6;
+            font-size: 14px;
+            max-width: 92vw;
+            word-wrap: break-word;
+        }
+    </style>
 </head>
 
 <body>
-    <h2>Tracking is ON ✅</h2>
-    <p>Keep this page open. Allow location permission.</p>
+
+    <h2>📍 Phone Tracker</h2>
+    <p>Allow location permission. Keep this page open.</p>
+
+    <button class="btn start" onclick="startTracking()">START</button>
+    <button class="btn stop" onclick="stopTracking()">STOP</button>
+
+    <div class="status" id="status">Status: Not started</div>
 
     <script src="tracker.js"></script>
 </body>
