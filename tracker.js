@@ -11,16 +11,12 @@ function setStatus(t) { statusEl.textContent = t; }
 
 async function sendEvent(type) {
     try {
-        const r = await fetch(`${SERVER_URL}/event`, {
+        await fetch(`${SERVER_URL}/event`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ type, timestamp: new Date().toISOString() })
         });
-        const txt = await r.text();
-        console.log("EVENT:", type, r.status, txt);
-    } catch (e) {
-        console.error("EVENT failed:", e);
-    }
+    } catch (e) { }
 }
 
 async function sendLocation(position) {
@@ -32,35 +28,27 @@ async function sendLocation(position) {
     };
 
     try {
-        const r = await fetch(`${SERVER_URL}/location`, {
+        await fetch(`${SERVER_URL}/location`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         });
-        const j = await r.json();
-        console.log("LOCATION:", j);
-    } catch (e) {
-        console.error("LOCATION failed:", e);
-    }
+    } catch (e) { }
 }
 
 function onGeoError(err) {
     console.error(err);
-    setStatus("Status: Location permission/GPS error ❌");
+    setStatus("Status: GPS/Permission error ❌");
     alert("Enable Location permission + turn ON GPS.");
 }
 
 function startTracking() {
     if (started) return;
-    if (!navigator.geolocation) {
-        alert("Geolocation not supported on this device/browser.");
-        return;
-    }
+    if (!navigator.geolocation) return alert("Geolocation not supported.");
 
     started = true;
-    setStatus("Status: Tracking started ✅");
+    setStatus("Status: Started ✅");          // ✅ change 1
 
-    // Start a new trip on server + reset points
     sendEvent("START");
 
     watchId = navigator.geolocation.watchPosition(
@@ -74,9 +62,8 @@ function stopTracking() {
     if (!started) return;
 
     started = false;
-    setStatus("Status: Tracking stopped 🛑");
+    setStatus("Status: Stopped 🛑");          // ✅ change 2
 
-    // mark destination on server
     sendEvent("STOP");
 
     if (watchId !== null) {
@@ -85,9 +72,7 @@ function stopTracking() {
     }
 }
 
-// Wire buttons (this is the key fix)
 btnStart.addEventListener("click", startTracking);
 btnStop.addEventListener("click", stopTracking);
 
-// Optional: show loaded
-console.log("tracker.js loaded ✅");
+setStatus("Status: Not started");

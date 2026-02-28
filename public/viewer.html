@@ -65,6 +65,17 @@
 
         let pathLine;
         let liveMarker, startMarker, destMarker;
+        const iconToUse = (trip.stoppedAt ? liveRedIcon : liveBlueIcon);
+
+        // LIVE marker (blue while moving, red after STOP)
+        if (!liveMarker) {
+            liveMarker = L.marker([last.latitude, last.longitude], { icon: iconToUse })
+                .addTo(map)
+                .bindPopup(trip.stoppedAt ? "🔴 LAST LOCATION" : "🔵 LIVE");
+        } else {
+            liveMarker.setLatLng([last.latitude, last.longitude]);
+            liveMarker.setIcon(iconToUse); // ✅ turns red after STOP
+        }
 
         function kmph(speedMs) {
             if (!speedMs) return 0;
