@@ -1,34 +1,33 @@
-const SERVER_URL = "https://gps-tracker-api-wqoy.onrender.com";
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const path = require("path");
 
-function sendLocation(position) {
-    const data = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        speed: position.coords.speed,     // m/s (can be null)
-        timestamp: new Date().toISOString()
-    };
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
 
-    fetch(`${SERVER_URL}/location`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    })
-        .then(r => r.json())
-        .then(d => console.log("Location sent ✅", d))
-        .catch(e => console.error("Send failed ❌", e));
-}
+// ✅ MUST be here (serves /tracker.html, /viewer.html, /tracker.js)
+app.use(express.static(path.join(__dirname, "public")));
 
-function errorHandler(err) {
-    console.error(err);
-    alert("Please enable Location access (GPS).");
-}
+let locations = [];
 
-if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(sendLocation, errorHandler, {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 10000
+app.get("/", (req, res) => res.send("Server is running ✅"));
+
+app.post("/location", (req, res) => {
+    const { latitude, longitude, speed, timestamp } = req.body;
+
+    locations.push({
+        latitude,
+        longitude,
+        speed: speed || 0,
+        timestamp: timestamp || new Date().toISOString()
     });
-} else {
-    alert("Geolocation not supported.");
-}
+
+    res.json({ message: "Location saved ✅" });
+});
+
+app.get("/locations", (req, res) => res.json(locations));
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log("Running on port", PORT));
