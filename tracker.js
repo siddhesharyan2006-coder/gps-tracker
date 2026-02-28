@@ -1,45 +1,34 @@
-// 🔥 PUT YOUR REAL BACKEND URL HERE
-// If using Render:
-const SERVER_URL = "https://your-app-name.onrender.com";
-
-// If running locally, use this instead:
-// const SERVER_URL = "http://localhost:5000";
+const SERVER_URL = "https://gps-tracker-api-wqoy.onrender.com";
 
 function sendLocation(position) {
     const data = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
-        speed: position.coords.speed,
-        timestamp: new Date()
+        speed: position.coords.speed,     // m/s (can be null)
+        timestamp: new Date().toISOString()
     };
 
     fetch(`${SERVER_URL}/location`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
     })
-        .then(response => response.json())
-        .then(result => {
-            console.log("Location sent ✅", result);
-        })
-        .catch(error => {
-            console.error("Error sending location ❌", error);
-        });
+        .then(r => r.json())
+        .then(d => console.log("Location sent ✅", d))
+        .catch(e => console.error("Send failed ❌", e));
 }
 
-function errorHandler(error) {
-    alert("Please enable location access.");
-    console.error(error);
+function errorHandler(err) {
+    console.error(err);
+    alert("Please enable Location access (GPS).");
 }
 
 if (navigator.geolocation) {
     navigator.geolocation.watchPosition(sendLocation, errorHandler, {
         enableHighAccuracy: true,
         maximumAge: 0,
-        timeout: 5000
+        timeout: 10000
     });
 } else {
-    alert("Geolocation is not supported by this browser.");
+    alert("Geolocation not supported.");
 }
