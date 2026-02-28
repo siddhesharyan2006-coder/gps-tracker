@@ -1,30 +1,53 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const path = require("path");
 
 const app = express();
+
 app.use(cors());
 app.use(bodyParser.json());
 
+// ✅ VERY IMPORTANT - Serve public folder
+app.use(express.static(path.join(__dirname, "public")));
+
 let locations = [];
 
-// TEST ROUTE (this fixes Cannot GET /)
+// Home route
 app.get("/", (req, res) => {
     res.send("Server is running ✅");
 });
 
 // Save location
 app.post("/location", (req, res) => {
-    const data = req.body;
-    locations.push(data);
-    res.json({ message: "Location saved" });
+    const { latitude, longitude, speed, timestamp } = req.body;
+
+    const record = {
+        latitude,
+        longitude,
+        speed: speed || 0,
+        timestamp: timestamp || new Date().toISOString()
+    };
+
+    locations.push(record);
+
+    res.json({ message: "Location saved ✅", saved: record });
 });
 
-// Get all locations
+// Send all saved locations
 app.get("/locations", (req, res) => {
     res.json(locations);
 });
 
-app.listen(5000, () => {
-    console.log("Server running on port 5000");
+// Optional reset
+app.get("/reset", (req, res) => {
+    locations = [];
+    res.json({ message: "Trip reset ✅" });
+});
+
+// ✅ IMPORTANT FOR RENDER
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
