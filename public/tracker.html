@@ -8,15 +8,7 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 40px 16px;
-        }
-
-        h2 {
-            margin: 0 0 10px;
-        }
-
-        p {
-            margin: 0 0 18px;
+            padding: 40px 16px
         }
 
         .btn {
@@ -26,17 +18,17 @@
             border-radius: 12px;
             margin: 8px;
             cursor: pointer;
-            width: 160px;
+            width: 160px
         }
 
         .start {
             background: #18a34a;
-            color: white;
+            color: #fff
         }
 
         .stop {
             background: #dc2626;
-            color: white;
+            color: #fff
         }
 
         .status {
@@ -45,24 +37,22 @@
             padding: 10px 14px;
             border-radius: 12px;
             background: #f3f4f6;
-            font-size: 14px;
-            max-width: 92vw;
-            word-wrap: break-word;
+            font-size: 14px
         }
     </style>
 </head>
 
 <body>
-
     <h2>📍 Phone Tracker</h2>
     <p>Allow location permission. Keep this page open.</p>
 
-    <button class="btn start" onclick="startTracking()">START</button>
-    <button class="btn stop" onclick="stopTracking()">STOP</button>
+    <button class="btn start" id="btnStart">START</button>
+    <button class="btn stop" id="btnStop">STOP</button>
 
     <div class="status" id="status">Status: Not started</div>
 
-    <script src="tracker.js"></script>
+    <!-- cache-bust so old JS never loads -->
+    <script src="tracker.js?v=3"></script>
 </body>
 
 </html>
