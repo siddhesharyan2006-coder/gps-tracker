@@ -4,7 +4,6 @@
 <head>
     <title>Live Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -53,7 +52,7 @@
 </head>
 
 <body>
-    <div class="panel">🟢 START / 🔴 DESTINATION Live Viewer</div>
+    <div class="panel">🟢 START / 🔵 LIVE / 🔴 DESTINATION</div>
     <div id="map"></div>
     <div class="bottom" id="info">Waiting for trip...</div>
 
@@ -63,78 +62,75 @@
         const map = L.map("map").setView([0, 0], 2);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-        let pathLine;
-        let liveMarker, startMarker, destMarker;
-        const iconToUse = (trip.stoppedAt ? liveRedIcon : liveBlueIcon);
+        let pathLine, liveMarker, startMarker, destMarker;
 
-        // LIVE marker (blue while moving, red after STOP)
-        if (!liveMarker) {
-            liveMarker = L.marker([last.latitude, last.longitude], { icon: iconToUse })
-                .addTo(map)
-                .bindPopup(trip.stoppedAt ? "🔴 LAST LOCATION" : "🔵 LIVE");
-        } else {
-            liveMarker.setLatLng([last.latitude, last.longitude]);
-            liveMarker.setIcon(iconToUse); // ✅ turns red after STOP
-        }
+        // ✅ Icons (blue while moving, red after stop)
+        const liveBlueIcon = L.divIcon({
+            className: "",
+            html: `<div style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
 
-        function kmph(speedMs) {
-            if (!speedMs) return 0;
-            return (speedMs * 3.6);
-        }
+        const liveRedIcon = L.divIcon({
+            className: "",
+            html: `<div style="width:18px;height:18px;border-radius:50%;background:#dc2626;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
+
+        function kmph(speedMs) { return (speedMs ? speedMs * 3.6 : 0); }
 
         async function update() {
             const [locRes, tripRes] = await Promise.all([
-                fetch(`${SERVER_URL}/locations`),
-                fetch(`${SERVER_URL}/trip`)
+                fetch(`${SERVER_URL}/locations`, { cache: "no-store" }),
+                fetch(`${SERVER_URL}/trip`, { cache: "no-store" })
             ]);
 
             const data = await locRes.json();
             const trip = await tripRes.json();
 
             if (!trip.startedAt) {
-                document.getElementById("info").innerHTML = "Trip not started yet. Ask tracker to press START.";
+                document.getElementById("info").innerHTML =
+                    "Trip not started yet. Ask tracker to press START.";
                 return;
             }
 
             if (!data || data.length === 0) {
-                document.getElementById("info").innerHTML = `Trip started at: ${new Date(trip.startedAt).toLocaleString()}<br>Waiting for first GPS point...`;
+                document.getElementById("info").innerHTML =
+                    `Trip started at: ${new Date(trip.startedAt).toLocaleString()}<br>Waiting for first GPS point...`;
                 return;
             }
 
             const latlngs = data.map(p => [p.latitude, p.longitude]);
             const last = data[data.length - 1];
 
-            // START marker from trip.startPoint (fallback to first point)
+            // START marker
             const sp = trip.startPoint || { latitude: data[0].latitude, longitude: data[0].longitude };
-            if (!startMarker) {
-                startMarker = L.marker([sp.latitude, sp.longitude]).addTo(map).bindPopup("🟢 START");
-            } else {
-                startMarker.setLatLng([sp.latitude, sp.longitude]);
-            }
+            if (!startMarker) startMarker = L.marker([sp.latitude, sp.longitude]).addTo(map).bindPopup("🟢 START");
+            else startMarker.setLatLng([sp.latitude, sp.longitude]);
 
-            // LIVE marker
+            // LIVE marker (turns red after STOP)
+            const iconToUse = (trip.stoppedAt ? liveRedIcon : liveBlueIcon);
             if (!liveMarker) {
-                liveMarker = L.marker([last.latitude, last.longitude]).addTo(map).bindPopup("🔵 LIVE");
+                liveMarker = L.marker([last.latitude, last.longitude], { icon: iconToUse })
+                    .addTo(map)
+                    .bindPopup(trip.stoppedAt ? "🔴 LAST LOCATION" : "🔵 LIVE");
             } else {
                 liveMarker.setLatLng([last.latitude, last.longitude]);
+                liveMarker.setIcon(iconToUse);
             }
 
-            // DESTINATION marker appears only after STOP
+            // DESTINATION marker (only after STOP)
             if (trip.stoppedAt && trip.stopPoint) {
                 const dp = trip.stopPoint;
-                if (!destMarker) {
-                    destMarker = L.marker([dp.latitude, dp.longitude]).addTo(map).bindPopup("🔴 DESTINATION");
-                } else {
-                    destMarker.setLatLng([dp.latitude, dp.longitude]);
-                }
+                if (!destMarker) destMarker = L.marker([dp.latitude, dp.longitude]).addTo(map).bindPopup("🔴 DESTINATION");
+                else destMarker.setLatLng([dp.latitude, dp.longitude]);
             }
 
-            // route polyline
-            if (!pathLine) {
-                pathLine = L.polyline(latlngs).addTo(map);
-            } else {
-                pathLine.setLatLngs(latlngs);
-            }
+            // path
+            if (!pathLine) pathLine = L.polyline(latlngs).addTo(map);
+            else pathLine.setLatLngs(latlngs);
 
             map.setView([last.latitude, last.longitude], 16);
 
