@@ -53,8 +53,8 @@ app.post("/event", (req, res) => {
     if (type === "START") {
         // new trip: reset
         locations = [];
-        trip = {
-            startedAt: time,
+        let trip = {
+            startedAt: null,
             startPoint: null,
             stoppedAt: null,
             stopPoint: null
