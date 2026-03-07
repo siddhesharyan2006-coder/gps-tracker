@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>School Child GPS Monitoring</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --bg1: #0f172a;
+            --bg2: #1d4ed8;
+            --card: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --green: #16a34a;
+            --red: #dc2626;
+            --yellow: #f59e0b;
+            --blue: #2563eb;
+            --soft: #eef4ff;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, var(--bg1), var(--bg2));
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            width: min(1100px, 94%);
+            margin: 0 auto;
+            padding: 20px 0 30px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 16px 0 24px;
+        }
+
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: clamp(28px, 5vw, 42px);
+        }
+
+        .hero p {
+            margin: 0;
+            color: #dbeafe;
+            font-size: 15px;
+        }
+
+        .card {
+            background: var(--card);
+            color: var(--text);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, .25);
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        .grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .home-actions {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin-top: 18px;
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .role-btn,
+        .main-btn,
+        .chip,
+        .mini-btn {
+            border: none;
+            cursor: pointer;
+            border-radius: 16px;
+            transition: .2s ease;
+            font-weight: 700;
+        }
+
+        .role-btn {
+            padding: 18px;
+            background: var(--soft);
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .role-btn.active {
+            background: var(--blue);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .main-btn {
+            padding: 14px 18px;
+            font-size: 16px;
+            color: #fff;
+            background: var(--blue);
+            width: 100%;
+        }
+
+        .main-btn.secondary {
+            background: #0f766e
+        }
+
+        .main-btn.red {
+            background: var(--red)
+        }
+
+        .main-btn.green {
+            background: var(--green)
+        }
+
+        .main-btn.gray {
+            background: #475569
+        }
+
+        .main-btn:hover,
+        .role-btn:hover,
+        .chip:hover,
+        .mini-btn:hover {
+            transform: translateY(-2px)
+        }
+
+        form {
+            display: grid;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .two {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .message {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b
+        }
+
+        .info {
+            background: #dbeafe;
+            color: #1d4ed8
+        }
+
+        .popup {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: var(--green);
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .25);
+            z-index: 9999;
+            font-weight: 700;
+        }
+
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .dash-title {
+            margin: 0;
+            font-size: 24px;
+            color: var(--text);
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .side-card,
+        .map-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+            color: var(--text);
+            min-height: 560px;
+        }
+
+        .stats {
+            display: grid;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .stat {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .stat b {
+            display: block;
+            margin-bottom: 4px
+        }
+
+        #studentMap,
+        #parentMap,
+        #teacherMap {
+            width: 100%;
+            height: 520px;
+            min-height: 520px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #e2e8f0;
+        }
+
+        .chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 10px 0 14px;
+        }
+
+        .chip {
+            padding: 10px 14px;
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .chip.active {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .mini-btn {
+            padding: 10px 14px;
+            color: #fff;
+            background: #334155;
+        }
+
+        .legend {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #475569;
+            font-weight: 700;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        @media (max-width:900px) {
+            .row {
+                grid-template-columns: 1fr
+            }
+
+            #studentMap,
+            #parentMap,
+            #teacherMap {
+                height: 420px;
+                min-height: 420px
+            }
+        }
+
+        @media (max-width:640px) {
+            .two {
+                grid-template-columns: 1fr
+            }
+
+            .toolbar {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>School Child GPS Monitoring</h1>
+            <p>Parents and teachers can monitor student travel to and from school.</p>
+        </div>
+
+        <section id="homeView" class="card">
+            <h2 style="margin-top:0;color:#0f172a">Welcome</h2>
+            <p style="color:#64748b">Choose your role, then Login or Register.</p>
+
+            <div class="role-grid">
+                <button class="role-btn active" data-role="student">Student</button>
+                <button class="role-btn" data-role="parent">Parent</button>
+                <button class="role-btn" data-role="teacher">Teacher</button>
+            </div>
+
+            <div class="grid home-actions">
+                <button class="main-btn" id="goLoginBtn">Login</button>
+                <button class="main-btn secondary" id="goRegisterBtn">Register</button>
+            </div>
+
+            <div id="homeMessage"></div>
+        </section>
+
+        <section id="registerView" class="card hidden">
+            <div class="dash-header">
+                <div>
+                    <h2 class="dash-title">Register</h2>
+                    <div class="sub" id="registerSubtitle"></div>
+                </div>
+                <button class="main-btn gray" style="width:auto" onclick="goHome()">Back</button>
+            </div>
+
+            <form id="studentRegisterForm" class="hidden">
+                <div class="two">
+                    <div><label>Name</label><input name="name" required /></div>
+                    <div><label>Roll Number</label><input name="rollNumber" required /></div>
+                </div>
+                <div class="two">
+                    <div><label>Age</label><input name="age" type="number" required /></div>
+                    <div>
+                        <label>Gender</label>
+                        <select name="gender" required>
+                            <option value="">Select Gender</option>
+                            <option>Male</option>
+                            <option>Female</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="two">
+                    <div><label>Mother’s Name</label><input name="motherName" required /></div>
+                    <div><label>Father’s Name</label><input name="fatherName" required /></div>
+                </div>
+                <div class="two">
+                    <div><label>Parent Mobile Number</label><input name="parentMobileNumber" required /></div>
+                    <div><label>Student Mobile Number</label><input name="studentMobileNumber" required /></div>
+                </div>
+                <button class="main-btn secondary" type="submit">Continue to Set Password</button>
+            </form>
+
+            <form id="studentPasswordForm" class="hidden">
+                <div class="message info">Roll Number: <b id="displayRollNumber"></b></div>
+                <div><label>Set Password</label><input id="studentPassword" type="password" required /></div>
+                <button class="main-btn green" type="submit">Finish Registration</button>
+            </form>
+
+            <form id="parentRegisterForm" class="hidden">
+                <div class="two">
+                    <div><label>Parent Name</label><input name="parentName" required /></div>
+                    <div><label>Child Roll Number</label><input name="childRollNumber" required /></div>
+                </div>
+                <div class="two">
+                    <div><label>Mobile Number</label><input name="mobile" required /></div>
+                    <div><label>Email</label><input name="email" type="email" required /></div>
+                </div>
+                <div><label>Password</label><input name="password" type="password" required /></div>
+                <button class="main-btn secondary" type="submit">Register Parent</button>
+            </form>
+
+            <form id="teacherRegisterForm" class="hidden">
+                <div class="two">
+                    <div><label>Name</label><input name="name" required /></div>
+                    <div><label>Teacher ID</label><input name="teacherId" required /></div>
+                </div>
+                <div class="two">
+                    <div><label>Subject</label><input name="subject" required /></div>
+                    <div><label>Mobile Number</label><input name="mobile" required /></div>
+                </div>
+                <div class="two">
+                    <div><label>Email</label><input name="email" type="email" required /></div>
+                    <div><label>Password</label><input name="password" type="password" required /></div>
+                </div>
+                <button class="main-btn secondary" type="submit">Register Teacher</button>
+            </form>
+
+            <div id="registerMessage"></div>
+        </section>
+
+        <section id="loginView" class="card hidden">
+            <div class="dash-header">
+                <div>
+                    <h2 class="dash-title">Login</h2>
+                    <div class="sub" id="loginSubtitle"></div>
+                </div>
+                <button class="main-btn gray" style="width:auto" onclick="goHome()">Back</button>
+            </div>
+
+            <form id="studentLoginForm" class="hidden">
+                <div><label>Roll Number</label><input name="rollNumber" required /></div>
+                <div><label>Password</label><input name="password" type="password" required /></div>
+                <button class="main-btn" type="submit">Login as Student</button>
+            </form>
+
+            <form id="parentLoginForm" class="hidden">
+                <div><label>Email</label><input name="email" type="email" required /></div>
+                <div><label>Password</label><input name="password" type="password" required /></div>
+                <button class="main-btn" type="submit">Login as Parent</button>
+            </form>
+
+            <form id="teacherLoginForm" class="hidden">
+                <div><label>Teacher ID</label><input name="teacherId" required /></div>
+                <div><label>Password</label><input name="password" type="password" required /></div>
+                <button class="main-btn" type="submit">Login as Teacher</button>
+            </form>
+
+            <div id="loginMessage"></div>
+        </section>
+
+        <section id="studentDashboard" class="card hidden">
+            <div class="dash-header">
+                <div>
+                    <h2 class="dash-title">Student Dashboard</h2>
+                    <div class="sub" id="studentWelcome"></div>
+                </div>
+                <button class="main-btn gray" style="width:auto" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="row">
+                <div class="side-card">
+                    <h3 style="margin-top:0">Travel Controls</h3>
+                    <div class="stats">
+                        <div class="stat"><b>Roll Number</b><span id="studentRollInfo">-</span></div>
+                        <div class="stat"><b>Status</b><span id="studentStatusText">Not Started</span></div>
+                    </div>
+                    <div style="margin-top:14px" class="grid">
+                        <button class="main-btn green" id="studentStartBtn">Start Travel</button>
+                        <button class="main-btn red" id="studentStopBtn">Stop Travel</button>
+                    </div>
+                    <div class="legend">
+                        <span><span class="dot" style="background:#16a34a"></span>Start</span>
+                        <span><span class="dot" style="background:#2563eb"></span>Live</span>
+                        <span><span class="dot" style="background:#dc2626"></span>Destination</span>
+                    </div>
+                    <div id="studentTrackerMessage"></div>
+                </div>
+                <div class="map-card">
+                    <div id="studentMap"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="parentDashboard" class="card hidden">
+            <div class="dash-header">
+                <div>
+                    <h2 class="dash-title">Parent Dashboard</h2>
+                    <div class="sub" id="parentWelcome"></div>
+                </div>
+                <button class="main-btn gray" style="width:auto" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="chips" id="childrenTabs"></div>
+
+            <div class="row">
+                <div class="side-card">
+                    <h3 style="margin-top:0">Child Travel Details</h3>
+                    <div class="stats">
+                        <div class="stat"><b>Child Name</b><span id="parentChildName">-</span></div>
+                        <div class="stat"><b>Roll Number</b><span id="parentChildRoll">-</span></div>
+                        <div class="stat"><b>Travel Status</b><span id="parentTravelStatus">-</span></div>
+                        <div class="stat"><b>Started At</b><span id="parentStartedAt">-</span></div>
+                        <div class="stat"><b>Stopped At</b><span id="parentStoppedAt">-</span></div>
+                        <div class="stat"><b>Latest Position</b><span id="parentLatestPos">-</span></div>
+                    </div>
+                </div>
+                <div class="map-card">
+                    <div id="parentMap"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="teacherDashboard" class="card hidden">
+            <div class="dash-header">
+                <div>
+                    <h2 class="dash-title">Teacher Dashboard</h2>
+                    <div class="sub" id="teacherWelcome"></div>
+                </div>
+                <button class="main-btn gray" style="width:auto" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="toolbar">
+                <select id="teacherStudentSelect"></select>
+                <input id="teacherSearchInput" placeholder="Search by Roll Number" />
+                <button class="mini-btn" id="teacherSearchBtn">Search</button>
+            </div>
+
+            <div class="row">
+                <div class="side-card">
+                    <h3 style="margin-top:0">Student Monitoring</h3>
+                    <div class="stats">
+                        <div class="stat"><b>Name</b><span id="teacherStudentName">-</span></div>
+                        <div class="stat"><b>Roll Number</b><span id="teacherStudentRoll">-</span></div>
+                        <div class="stat"><b>Travel Status</b><span id="teacherTravelStatus">-</span></div>
+                        <div class="stat"><b>Attendance / Travel</b><span id="teacherAttendanceStatus">-</span></div>
+                        <div class="stat"><b>Latest Position</b><span id="teacherLatestPos">-</span></div>
+                    </div>
+                </div>
+                <div class="map-card">
+                    <div id="teacherMap"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const state = {
+            selectedRole: "student",
+            pendingStudentRoll: "",
+            currentUser: null,
+            parentSelectedChild: null,
+            teacherSelectedRoll: null
+        };
+
+        const iconBlue = L.divIcon({
+            className: "",
+            html: '<div style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
+
+        const iconRed = L.divIcon({
+            className: "",
+            html: '<div style="width:18px;height:18px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
+
+        let studentMap, parentMap, teacherMap;
+        let studentLayers = {}, parentLayers = {}, teacherLayers = {};
+        let studentWatchId = null;
+        let pollers = [];
+
+        function $(id) { return document.getElementById(id); }
+
+        function hideAllViews() {
+            ["homeView", "registerView", "loginView", "studentDashboard", "parentDashboard", "teacherDashboard"]
+                .forEach(id => $(id).classList.add("hidden"));
+        }
+
+        function clearMessages() {
+            $("homeMessage").innerHTML = "";
+            $("registerMessage").innerHTML = "";
+            $("loginMessage").innerHTML = "";
+            $("studentTrackerMessage").innerHTML = "";
+        }
+
+        function showMessage(targetId, text, type = "info") {
+            $(targetId).innerHTML = `<div class="message ${type}">${text}</div>`;
+        }
+
+        function popup(text) {
+            const el = document.createElement("div");
+            el.className = "popup";
+            el.textContent = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2000);
+        }
+
+        function goHome() {
+            stopStudentGpsWatcher();
+            clearPollers();
+            clearMessages();
+            hideAllViews();
+            $("homeView").classList.remove("hidden");
+        }
+
+        function logout() {
+            state.currentUser = null;
+            state.parentSelectedChild = null;
+            state.teacherSelectedRoll = null;
+            goHome();
+        }
+
+        function roleSubtitle(mode) {
+            return `${state.selectedRole.charAt(0).toUpperCase() + state.selectedRole.slice(1)} ${mode}`;
+        }
+
+        function setRole(role) {
+            state.selectedRole = role;
+            document.querySelectorAll(".role-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.role === role);
+            });
+        }
+
+        document.querySelectorAll(".role-btn").forEach(btn => {
+            btn.addEventListener("click", () => setRole(btn.dataset.role));
+        });
+
+        $("goRegisterBtn").addEventListener("click", () => {
+            clearMessages();
+            hideAllViews();
+            $("registerView").classList.remove("hidden");
+            $("registerSubtitle").textContent = roleSubtitle("Registration");
+            showRegisterForm();
+        });
+
+        $("goLoginBtn").addEventListener("click", () => {
+            clearMessages();
+            hideAllViews();
+            $("loginView").classList.remove("hidden");
+            $("loginSubtitle").textContent = roleSubtitle("Login");
+            showLoginForm();
+        });
+
+        function showRegisterForm() {
+            ["studentRegisterForm", "studentPasswordForm", "parentRegisterForm", "teacherRegisterForm"]
+                .forEach(id => $(id).classList.add("hidden"));
+
+            if (state.selectedRole === "student") $("studentRegisterForm").classList.remove("hidden");
+            if (state.selectedRole === "parent") $("parentRegisterForm").classList.remove("hidden");
+            if (state.selectedRole === "teacher") $("teacherRegisterForm").classList.remove("hidden");
+        }
+
+        function showLoginForm() {
+            ["studentLoginForm", "parentLoginForm", "teacherLoginForm"]
+                .forEach(id => $(id).classList.add("hidden"));
+
+            if (state.selectedRole === "student") $("studentLoginForm").classList.remove("hidden");
+            if (state.selectedRole === "parent") $("parentLoginForm").classList.remove("hidden");
+            if (state.selectedRole === "teacher") $("teacherLoginForm").classList.remove("hidden");
+        }
+
+        async function api(url, method = "GET", body = null) {
+            const res = await fetch(url, {
+                method,
+                headers: body ? { "Content-Type": "application/json" } : {},
+                body: body ? JSON.stringify(body) : null
+            });
+            return await res.json();
+        }
+
+        $("studentRegisterForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const body = Object.fromEntries(fd.entries());
+
+            const result = await api("/api/students/register", "POST", body);
+            if (!result.ok) return showMessage("registerMessage", result.message, "error");
+
+            state.pendingStudentRoll = body.rollNumber;
+            $("displayRollNumber").textContent = body.rollNumber;
+            $("studentRegisterForm").classList.add("hidden");
+            $("studentPasswordForm").classList.remove("hidden");
+            showMessage("registerMessage", "Student details saved. Now set the password.", "info");
+        });
+
+        $("studentPasswordForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const password = $("studentPassword").value.trim();
+            const result = await api("/api/students/set-password", "POST", {
+                rollNumber: state.pendingStudentRoll,
+                password
+            });
+
+            if (!result.ok) return showMessage("registerMessage", result.message, "error");
+
+            popup("Successfully Registered");
+            setTimeout(() => {
+                $("studentPasswordForm").reset();
+                $("studentRegisterForm").reset();
+                state.pendingStudentRoll = "";
+                goHome();
+            }, 2000);
+        });
+
+        $("parentRegisterForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const body = Object.fromEntries(new FormData(e.target).entries());
+            const result = await api("/api/parents/register", "POST", body);
+
+            if (!result.ok) return showMessage("registerMessage", result.message, "error");
+
+            popup("Successfully Registered");
+            setTimeout(() => {
+                e.target.reset();
+                goHome();
+            }, 2000);
+        });
+
+        $("teacherRegisterForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const body = Object.fromEntries(new FormData(e.target).entries());
+            const result = await api("/api/teachers/register", "POST", body);
+
+            if (!result.ok) return showMessage("registerMessage", result.message, "error");
+
+            popup("Successfully Registered");
+            setTimeout(() => {
+                e.target.reset();
+                goHome();
+            }, 2000);
+        });
+
+        $("studentLoginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const body = Object.fromEntries(new FormData(e.target).entries());
+            const result = await api("/api/students/login", "POST", body);
+
+            if (!result.ok) {
+                return showMessage("loginMessage", result.message, "error");
+            }
+
+            state.currentUser = result.user;
+            openStudentDashboard();
+        });
+
+        $("parentLoginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const body = Object.fromEntries(new FormData(e.target).entries());
+            const result = await api("/api/parents/login", "POST", body);
+
+            if (!result.ok) return showMessage("loginMessage", result.message, "error");
+
+            state.currentUser = result.user;
+            openParentDashboard();
+        });
+
+        $("teacherLoginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const body = Object.fromEntries(new FormData(e.target).entries());
+            const result = await api("/api/teachers/login", "POST", body);
+
+            if (!result.ok) return showMessage("loginMessage", result.message, "error");
+
+            state.currentUser = result.user;
+            openTeacherDashboard();
+        });
+
+        function makeMap(targetId) {
+            const map = L.map(targetId).setView([17.7348, 83.3390], 14);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "© OpenStreetMap contributors"
+            }).addTo(map);
+            return map;
+        }
+
+        function refreshMapSize(map) {
+            if (!map) return;
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 250);
+        }
+
+        function resetLayerStore(store, map) {
+            Object.values(store).forEach(layer => {
+                if (layer && map.hasLayer(layer)) {
+                    map.removeLayer(layer);
+                }
+            });
+            return {};
+        }
+
+        function renderTracking(map, store, data) {
+            if (!map || !data || !data.locations) return store;
+
+            store = resetLayerStore(store, map);
+
+            const { locations, trip } = data;
+
+            if (!locations.length) {
+                refreshMapSize(map);
+                return store;
+            }
+
+            const start = locations[0];
+            const last = locations[locations.length - 1];
+
+            store.startMarker = L.marker([start.latitude, start.longitude]).addTo(map).bindPopup("Start");
+
+            store.liveMarker = L.marker(
+                [last.latitude, last.longitude],
+                { icon: trip.stoppedAt ? iconRed : iconBlue }
+            ).addTo(map).bindPopup(trip.stoppedAt ? "Destination / Last Location" : "Live Location");
+
+            if (trip.stoppedAt) {
+                store.destMarker = L.marker([last.latitude, last.longitude], { icon: iconRed })
+                    .addTo(map).bindPopup("Destination");
+            }
+
+            const latlngs = locations.map(p => [p.latitude, p.longitude]);
+            store.path = L.polyline(latlngs, { weight: 5 }).addTo(map);
+
+            map.setView([last.latitude, last.longitude], 16);
+            refreshMapSize(map);
+            return store;
+        }
+
+        function clearPollers() {
+            pollers.forEach(id => clearInterval(id));
+            pollers = [];
+        }
+
+        function stopStudentGpsWatcher() {
+            if (studentWatchId !== null) {
+                navigator.geolocation.clearWatch(studentWatchId);
+                studentWatchId = null;
+            }
+        }
+
+        function openStudentDashboard() {
+            hideAllViews();
+            clearPollers();
+            $("studentDashboard").classList.remove("hidden");
+            $("studentWelcome").textContent = `Welcome ${state.currentUser.name}`;
+            $("studentRollInfo").textContent = state.currentUser.rollNumber;
+            $("studentStatusText").textContent = "Not Started";
+
+            if (!studentMap) studentMap = makeMap("studentMap");
+            refreshMapSize(studentMap);
+            studentLayers = resetLayerStore(studentLayers, studentMap);
+
+            loadStatusForStudent(state.currentUser.rollNumber, "student");
+            const interval = setInterval(() => loadStatusForStudent(state.currentUser.rollNumber, "student"), 4000);
+            pollers.push(interval);
+        }
+
+        $("studentStartBtn").addEventListener("click", async () => {
+            const roll = state.currentUser.rollNumber;
+            const result = await api(`/api/tracking/start/${encodeURIComponent(roll)}`, "POST");
+
+            if (!result.ok) return showMessage("studentTrackerMessage", result.message, "error");
+
+            $("studentStatusText").textContent = "Travelling";
+            showMessage("studentTrackerMessage", "Tracking started. GPS location will update live.", "success");
+            startStudentGpsWatcher(roll);
+            loadStatusForStudent(roll, "student");
+        });
+
+        $("studentStopBtn").addEventListener("click", async () => {
+            const roll = state.currentUser.rollNumber;
+            stopStudentGpsWatcher();
+            const result = await api(`/api/tracking/stop/${encodeURIComponent(roll)}`, "POST");
+
+            if (!result.ok) return showMessage("studentTrackerMessage", result.message, "error");
+
+            $("studentStatusText").textContent = "Reached / Stopped";
+            showMessage("studentTrackerMessage", "Tracking stopped successfully.", "success");
+            loadStatusForStudent(roll, "student");
+        });
+
+        function startStudentGpsWatcher(roll) {
+            stopStudentGpsWatcher();
+            if (!navigator.geolocation) {
+                showMessage("studentTrackerMessage", "Geolocation not supported on this device.", "error");
+                return;
+            }
+
+            studentWatchId = navigator.geolocation.watchPosition(async (position) => {
+                await api(`/api/location/${encodeURIComponent(roll)}`, "POST", {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    speed: position.coords.speed || 0
+                });
+                loadStatusForStudent(roll, "student");
+            }, () => {
+                showMessage("studentTrackerMessage", "Please enable GPS and location permission.", "error");
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 10000
+            });
+        }
+
+        function openParentDashboard() {
+            hideAllViews();
+            clearPollers();
+            $("parentDashboard").classList.remove("hidden");
+            $("parentWelcome").textContent = `Welcome ${state.currentUser.name}`;
+
+            if (!parentMap) parentMap = makeMap("parentMap");
+            refreshMapSize(parentMap);
+            parentLayers = resetLayerStore(parentLayers, parentMap);
+
+            renderChildrenTabs();
+            if (state.currentUser.children.length) {
+                selectParentChild(state.currentUser.children[0].roll_number);
+            }
+        }
+
+        function renderChildrenTabs() {
+            const wrap = $("childrenTabs");
+            wrap.innerHTML = "";
+            state.currentUser.children.forEach(child => {
+                const btn = document.createElement("button");
+                btn.className = "chip";
+                btn.textContent = child.name;
+                btn.onclick = () => selectParentChild(child.roll_number);
+                btn.dataset.roll = child.roll_number;
+                wrap.appendChild(btn);
+            });
+        }
+
+        function selectParentChild(roll) {
+            state.parentSelectedChild = roll;
+            document.querySelectorAll("#childrenTabs .chip").forEach(chip => {
+                chip.classList.toggle("active", chip.dataset.roll === roll);
+            });
+
+            loadStatusForStudent(roll, "parent");
+            clearPollers();
+            const interval = setInterval(() => loadStatusForStudent(roll, "parent"), 4000);
+            pollers.push(interval);
+        }
+
+        async function openTeacherDashboard() {
+            hideAllViews();
+            clearPollers();
+            $("teacherDashboard").classList.remove("hidden");
+            $("teacherWelcome").textContent = `Welcome ${state.currentUser.name} (${state.currentUser.subject})`;
+
+            if (!teacherMap) teacherMap = makeMap("teacherMap");
+            refreshMapSize(teacherMap);
+            teacherLayers = resetLayerStore(teacherLayers, teacherMap);
+
+            const result = await api("/api/students");
+            if (!result.ok) return;
+
+            const select = $("teacherStudentSelect");
+            select.innerHTML = `<option value="">Select Student</option>`;
+            result.students.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.roll_number;
+                opt.textContent = `${s.name} (${s.roll_number})`;
+                select.appendChild(opt);
+            });
+
+            select.onchange = () => {
+                if (!select.value) return;
+                state.teacherSelectedRoll = select.value;
+                loadStatusForStudent(select.value, "teacher");
+                clearPollers();
+                const interval = setInterval(() => loadStatusForStudent(select.value, "teacher"), 4000);
+                pollers.push(interval);
+            };
+        }
+
+        $("teacherSearchBtn").addEventListener("click", () => {
+            const roll = $("teacherSearchInput").value.trim();
+            if (!roll) return;
+            $("teacherStudentSelect").value = roll;
+            state.teacherSelectedRoll = roll;
+            loadStatusForStudent(roll, "teacher");
+            clearPollers();
+            const interval = setInterval(() => loadStatusForStudent(roll, "teacher"), 4000);
+            pollers.push(interval);
+        });
+
+        async function loadStatusForStudent(rollNumber, mode) {
+            const result = await api(`/api/student-status/${encodeURIComponent(rollNumber)}`);
+            if (!result.ok) return;
+
+            const { student, trip, latestLocation } = result;
+
+            if (mode === "student") {
+                $("studentStatusText").textContent = trip.status;
+                studentLayers = renderTracking(studentMap, studentLayers, result);
+            }
+
+            if (mode === "parent") {
+                $("parentChildName").textContent = student.name;
+                $("parentChildRoll").textContent = student.rollNumber;
+                $("parentTravelStatus").textContent = trip.status;
+                $("parentStartedAt").textContent = trip.startedAt ? new Date(trip.startedAt).toLocaleString() : "-";
+                $("parentStoppedAt").textContent = trip.stoppedAt ? new Date(trip.stoppedAt).toLocaleString() : "-";
+                $("parentLatestPos").textContent = latestLocation
+                    ? `${latestLocation.latitude.toFixed(6)}, ${latestLocation.longitude.toFixed(6)}`
+                    : "-";
+                parentLayers = renderTracking(parentMap, parentLayers, result);
+            }
+
+            if (mode === "teacher") {
+                $("teacherStudentName").textContent = student.name;
+                $("teacherStudentRoll").textContent = student.rollNumber;
+                $("teacherTravelStatus").textContent = trip.status;
+                $("teacherAttendanceStatus").textContent =
+                    trip.status === "Travelling" ? "On the way to / from school" :
+                        trip.status === "Reached / Stopped" ? "Travel completed" : "Not travelling now";
+                $("teacherLatestPos").textContent = latestLocation
+                    ? `${latestLocation.latitude.toFixed(6)}, ${latestLocation.longitude.toFixed(6)}`
+                    : "-";
+                teacherLayers = renderTracking(teacherMap, teacherLayers, result);
+            }
+        }
+
+        goHome();
+    </script>
+</body>
+
+</html>
