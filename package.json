@@ -1,14 +1,12 @@
 {
-  "name": "school-gps-monitor",
+  "name": "gps-tracking-dashboard",
   "version": "1.0.0",
-  "description": "School Child GPS Monitoring Web Application",
+  "description": "GPS Tracking Dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "express": "^4.21.2",
-    "sqlite3": "^5.1.7"
+    "express": "^4.21.2"
   }
 }

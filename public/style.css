@@ -1,0 +1,102 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f4f7fb;
+  color: #222;
+}
+
+.topbar {
+  background: #1e3a8a;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.topbar h1 {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.topbar p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.map-card,
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.map-card h2,
+.card h2 {
+  margin-bottom: 16px;
+  color: #1e3a8a;
+}
+
+.map-placeholder {
+  height: 420px;
+  border: 2px dashed #94a3b8;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #eaf1ff;
+  color: #475569;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.vehicle-item {
+  border: 1px solid #dbe3f0;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #f9fbff;
+}
+
+.vehicle-item h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+.vehicle-item p {
+  font-size: 14px;
+  margin: 4px 0;
+  color: #334155;
+}
+
+.status-moving {
+  color: green;
+  font-weight: bold;
+}
+
+.status-idle {
+  color: #b45309;
+  font-weight: bold;
+}
+
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+
+  .map-placeholder {
+    height: 300px;
+  }
+}
