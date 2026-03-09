@@ -148,6 +148,12 @@ function travelStatusFromTrip(trip, latestLocation) {
   return "Reached / Stopped";
 }
 
+/* ---------------- HOME ROUTE ---------------- */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+/* ---------------- STUDENT ---------------- */
 app.post("/api/students/register", async (req, res) => {
   try {
     const {
@@ -161,7 +167,9 @@ app.post("/api/students/register", async (req, res) => {
       studentMobileNumber
     } = req.body;
 
-    if (!name || !rollNumber) return fail(res, "Name and Roll Number are required.");
+    if (!name || !rollNumber) {
+      return fail(res, "Name and Roll Number are required.");
+    }
 
     const exists = await getStudentByRoll(rollNumber);
     if (exists) return fail(res, "Roll Number already registered.");
@@ -192,10 +200,15 @@ app.post("/api/students/register", async (req, res) => {
 app.post("/api/students/set-password", async (req, res) => {
   try {
     const { rollNumber, password } = req.body;
-    if (!rollNumber || !password) return fail(res, "Roll Number and Password are required.");
+
+    if (!rollNumber || !password) {
+      return fail(res, "Roll Number and Password are required.");
+    }
 
     const student = await getStudentByRoll(rollNumber);
-    if (!student) return fail(res, "Roll Number not found. Please register first.");
+    if (!student) {
+      return fail(res, "Roll Number not found. Please register first.");
+    }
 
     const hash = await bcrypt.hash(password, 10);
     await run(`UPDATE students SET password_hash = ? WHERE roll_number = ?`, [hash, rollNumber]);
@@ -212,8 +225,13 @@ app.post("/api/students/login", async (req, res) => {
     const { rollNumber, password } = req.body;
     const student = await getStudentByRoll(rollNumber);
 
-    if (!student) return fail(res, "Roll Number not found. Please register first.", 404);
-    if (!student.password_hash) return fail(res, "Password not set. Please complete registration.");
+    if (!student) {
+      return fail(res, "Roll Number not found. Please register first.", 404);
+    }
+
+    if (!student.password_hash) {
+      return fail(res, "Password not set. Please complete registration.");
+    }
 
     const matched = await bcrypt.compare(password, student.password_hash);
     if (!matched) return fail(res, "Invalid password.");
@@ -232,6 +250,7 @@ app.post("/api/students/login", async (req, res) => {
   }
 });
 
+/* ---------------- PARENT ---------------- */
 app.post("/api/parents/register", async (req, res) => {
   try {
     const { parentName, childRollNumber, mobile, email, password } = req.body;
@@ -249,7 +268,8 @@ app.post("/api/parents/register", async (req, res) => {
     if (!parent) {
       const hash = await bcrypt.hash(password, 10);
       const result = await run(
-        `INSERT INTO parents (parent_name, mobile, email, password_hash) VALUES (?, ?, ?, ?)`,
+        `INSERT INTO parents (parent_name, mobile, email, password_hash)
+         VALUES (?, ?, ?, ?)`,
         [parentName, mobile, email, hash]
       );
       parentId = result.lastID;
@@ -312,9 +332,11 @@ app.post("/api/parents/login", async (req, res) => {
   }
 });
 
+/* ---------------- TEACHER ---------------- */
 app.post("/api/teachers/register", async (req, res) => {
   try {
     const { name, teacherId, subject, mobile, email, password } = req.body;
+
     if (!name || !teacherId || !subject || !mobile || !email || !password) {
       return fail(res, "All teacher fields are required.");
     }
@@ -364,6 +386,7 @@ app.post("/api/teachers/login", async (req, res) => {
   }
 });
 
+/* ---------------- STUDENT LIST ---------------- */
 app.get("/api/students", async (req, res) => {
   try {
     const students = await all(
@@ -376,6 +399,7 @@ app.get("/api/students", async (req, res) => {
   }
 });
 
+/* ---------------- STATUS / TRACKING ---------------- */
 app.get("/api/student-status/:rollNumber", async (req, res) => {
   try {
     const student = await getStudentByRoll(req.params.rollNumber);
@@ -389,8 +413,10 @@ app.get("/api/student-status/:rollNumber", async (req, res) => {
     const latestLocation = await getLatestLocation(student.id);
     const locations = trip
       ? await all(
-          `SELECT latitude, longitude, speed, created_at FROM locations
-           WHERE trip_id = ? ORDER BY id ASC`,
+          `SELECT latitude, longitude, speed, created_at
+           FROM locations
+           WHERE trip_id = ?
+           ORDER BY id ASC`,
           [trip.id]
         )
       : [];
@@ -461,6 +487,7 @@ app.post("/api/location/:rollNumber", async (req, res) => {
     if (!student) return fail(res, "Student not found.", 404);
 
     const { latitude, longitude, speed } = req.body;
+
     if (typeof latitude !== "number" || typeof longitude !== "number") {
       return fail(res, "Invalid coordinates.");
     }
@@ -488,7 +515,12 @@ app.post("/api/location/:rollNumber", async (req, res) => {
   }
 });
 
+/* ---------------- START SERVER ---------------- */
 app.listen(PORT, async () => {
-  await initDb();
-  console.log(`Server running on port ${PORT}`);
+  try {
+    await initDb();
+    console.log(`Server running on port ${PORT}`);
+  } catch (e) {
+    console.error("DB init failed:", e);
+  }
 });
