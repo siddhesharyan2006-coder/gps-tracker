@@ -1,35 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GPS Tracking Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>School GPS Tracker</title>
+
+<link rel="stylesheet" href="style.css">
+
+<!-- Leaflet Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 </head>
+
 <body>
-  <header class="topbar">
-    <h1>GPS Tracking Dashboard</h1>
-    <p>Real-time vehicle monitoring interface</p>
-  </header>
 
-  <main class="container">
-    <section class="map-section">
-      <div class="map-card">
-        <h2>Map View</h2>
-        <div class="map-placeholder">
-          <span>Live Map Area</span>
-        </div>
-      </div>
-    </section>
+<div class="container">
 
-    <section class="sidebar">
-      <div class="card">
-        <h2>Tracked Vehicles</h2>
-        <div id="vehicle-list"></div>
-      </div>
-    </section>
-  </main>
+<h1>School GPS Monitoring</h1>
 
-  <script src="script.js"></script>
+<div id="home">
+<button onclick="showLogin()">Login</button>
+<button onclick="showRegister()">Register</button>
+</div>
+
+<div id="roleSelect" class="hidden">
+<h2>Select Role</h2>
+<button onclick="selectRole('student')">Student</button>
+<button onclick="selectRole('parent')">Parent / Teacher</button>
+</div>
+
+<!-- STUDENT REGISTER -->
+
+<div id="studentRegister" class="hidden formBox">
+
+<input id="name" placeholder="Name">
+<input id="roll" placeholder="Roll Number">
+<input id="age" placeholder="Age">
+
+<select id="gender">
+<option>Male</option>
+<option>Female</option>
+<option>Other</option>
+</select>
+
+<input id="mother" placeholder="Mother Name">
+<input id="father" placeholder="Father Name">
+<input id="parentMobile" placeholder="Parent Mobile">
+<input id="studentMobile" placeholder="Student Mobile">
+
+<button onclick="submitStudent()">Next</button>
+
+</div>
+
+
+<!-- PASSWORD -->
+
+<div id="passwordScreen" class="hidden formBox">
+
+<p id="showRoll"></p>
+
+<input type="password" id="password" placeholder="Set Password">
+
+<button onclick="savePassword()">Register</button>
+
+</div>
+
+
+<!-- LOGIN -->
+
+<div id="loginBox" class="hidden formBox">
+
+<input id="loginRoll" placeholder="Roll Number">
+<input type="password" id="loginPass" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<p id="loginMsg"></p>
+
+</div>
+
+
+<!-- TRACK STUDENT -->
+
+<div id="trackBox" class="hidden">
+
+<h2>Track Student</h2>
+
+<input id="trackRoll" placeholder="Enter Roll Number">
+
+<button onclick="trackStudent()">Track</button>
+
+<div id="map"></div>
+
+</div>
+
+</div>
+
+<script src="script.js"></script>
+
 </body>
 </html>

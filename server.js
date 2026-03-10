@@ -1,49 +1,89 @@
-const express = require("express");
-const path = require("path");
+const express = require("express")
+const app = express()
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json())
+app.use(express.static("public"))
 
-app.use(express.static(path.join(__dirname, "public")));
+let students = []
+let locations = {}
 
-const vehicleData = [
-  {
-    id: 1,
-    vehicle: "Bus A1",
-    driver: "Ramesh",
-    latitude: 17.7285,
-    longitude: 83.3162,
-    status: "Moving",
-    speed: "42 km/h"
-  },
-  {
-    id: 2,
-    vehicle: "Van B2",
-    driver: "Suresh",
-    latitude: 17.7321,
-    longitude: 83.3018,
-    status: "Idle",
-    speed: "0 km/h"
-  },
-  {
-    id: 3,
-    vehicle: "Truck C3",
-    driver: "Mahesh",
-    latitude: 17.7199,
-    longitude: 83.3251,
-    status: "Moving",
-    speed: "36 km/h"
-  }
-];
 
-app.get("/api/vehicles", (req, res) => {
-  res.json(vehicleData);
-});
+// REGISTER STUDENT
+app.post("/api/register/student",(req,res)=>{
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+let student = req.body
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+students.push(student)
+
+res.json({
+message:"Student registered",
+trackingAPI:`/api/location/${student.roll}`
+})
+
+})
+
+
+// LOGIN STUDENT
+app.post("/api/login/student",(req,res)=>{
+
+let {roll,password} = req.body
+
+let student = students.find(s => s.roll === roll)
+
+if(!student){
+return res.json({message:"Roll number not found"})
+}
+
+if(student.password === password){
+res.json({
+message:"Login successful",
+api:`/api/location/${roll}`
+})
+}
+else{
+res.json({message:"Wrong password"})
+}
+
+})
+
+
+// UPDATE LOCATION (student phone sends GPS)
+app.post("/api/location/update",(req,res)=>{
+
+let {roll,lat,lng} = req.body
+
+locations[roll] = {
+lat,
+lng,
+time:new Date()
+}
+
+res.json({message:"Location updated"})
+
+})
+
+
+// GET LOCATION (parent/teacher tracking)
+app.get("/api/location/:roll",(req,res)=>{
+
+let roll = req.params.roll
+
+let location = locations[roll]
+
+if(!location){
+return res.json({message:"Location not available"})
+}
+
+res.json({
+roll,
+lat:location.lat,
+lng:location.lng,
+time:location.time
+})
+
+})
+
+
+app.listen(3000,()=>{
+console.log("Server running on port 3000")
+})
